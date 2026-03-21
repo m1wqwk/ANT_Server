@@ -2,7 +2,7 @@ name: Java CI with Maven and HTTPS
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "Z-2"]
   pull_request:
     branches: [ "main" ]
 
