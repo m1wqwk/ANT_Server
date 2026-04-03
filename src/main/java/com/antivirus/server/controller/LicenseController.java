@@ -59,7 +59,7 @@ public class LicenseController {
                                              Authentication authentication) {
         try {
             Long userId = getUserIdFromAuthentication(authentication);
-            LicenseTicket ticket = licenseService.activateLicense(request, userId);
+            TicketResponse ticket = licenseService.activateLicense(request, userId);
 
             return ResponseEntity.ok(Map.of(
                     "message", "License activated successfully",
@@ -90,7 +90,7 @@ public class LicenseController {
                                           Authentication authentication) {
         try {
             Long userId = getUserIdFromAuthentication(authentication);
-            LicenseTicket ticket = licenseService.renewLicense(request, userId);
+            TicketResponse ticket = licenseService.renewLicense(request, userId);
 
             return ResponseEntity.ok(Map.of(
                     "message", "License renewed successfully",
@@ -121,7 +121,7 @@ public class LicenseController {
                                           Authentication authentication) {
         try {
             Long userId = getUserIdFromAuthentication(authentication);
-            LicenseTicket ticket = licenseService.checkLicense(request, userId);
+            TicketResponse ticket = licenseService.checkLicense(request, userId);
 
             return ResponseEntity.ok(Map.of(
                     "message", "License is valid",
@@ -250,6 +250,22 @@ public class LicenseController {
             return foundUser.getId();
         } else {
             throw new SecurityException("User not authenticated properly");
+        }
+    }
+
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAllLicenses() {
+        try {
+            List<License> licenses = licenseService.getAllLicenses();
+            return ResponseEntity.ok(Map.of(
+                    "licenses", licenses,
+                    "count", licenses.size()
+            ));
+        } catch (Exception e) {
+            log.error("Error getting all licenses", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Internal server error"));
         }
     }
 }

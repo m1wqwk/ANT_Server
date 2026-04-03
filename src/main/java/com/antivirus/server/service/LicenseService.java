@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +26,7 @@ public class LicenseService {
     private final DeviceRepository deviceRepository;
     private final DeviceLicenseRepository deviceLicenseRepository;
     private final LicenseHistoryRepository licenseHistoryRepository;
+    private final TicketService ticketService;
 
     private static final String LICENSE_CODE_PREFIX = "ANT-";
     private static final int LICENSE_CODE_LENGTH = 16;
@@ -83,7 +83,7 @@ public class LicenseService {
     }
 
     @Transactional
-    public LicenseTicket activateLicense(LicenseActivateRequest request, Long userId) {
+    public TicketResponse activateLicense(LicenseActivateRequest request, Long userId) {
         log.info("Activating license: {} for user: {}", request.getActivationKey(), userId);
 
         License license = licenseRepository.findByCodeForUpdate(request.getActivationKey())
@@ -139,7 +139,7 @@ public class LicenseService {
         }
     }
 
-    private LicenseTicket activateFirstTime(License license, User user, Device device) {
+    private TicketResponse activateFirstTime(License license, User user, Device device) {
         log.info("First activation for license: {}", license.getCode());
 
         license.setUser(user);
@@ -168,13 +168,12 @@ public class LicenseService {
         licenseHistoryRepository.save(history);
 
         log.info("License activated successfully (first time): {} for user: {}", license.getCode(), user.getUsername());
-        return LicenseTicket.fromLicense(savedLicense);
+        return ticketService.generate(license, device);
     }
 
-    private LicenseTicket activateAdditionalDevice(License license, User user, Device device) {
+    private TicketResponse activateAdditionalDevice(License license, User user, Device device) {
         log.info("Additional activation for license: {} on device: {}", license.getCode(), device.getMacAddress());
 
-        // Проверка лимита устройств
         long activeDevicesCount = deviceLicenseRepository.countByLicense(license);
 
         if (activeDevicesCount >= license.getDeviceCount()) {
@@ -183,14 +182,12 @@ public class LicenseService {
                     activeDevicesCount, license.getDeviceCount()));
         }
 
-        // Создание связи лицензия-устройство
         DeviceLicense deviceLicense = DeviceLicense.builder()
                 .license(license)
                 .device(device)
                 .build();
         deviceLicenseRepository.save(deviceLicense);
 
-        // Создание записи в истории
         LicenseHistory history = LicenseHistory.builder()
                 .license(license)
                 .user(user)
@@ -201,11 +198,11 @@ public class LicenseService {
         licenseHistoryRepository.save(history);
 
         log.info("License activated on additional device: {} for license: {}", device.getMacAddress(), license.getCode());
-        return LicenseTicket.fromLicense(license);
+        return ticketService.generate(license, device);
     }
 
     @Transactional
-    public LicenseTicket renewLicense(LicenseRenewRequest request, Long userId) {
+    public TicketResponse renewLicense(LicenseRenewRequest request, Long userId) {
         log.info("Renewing license: {} for user: {}", request.getActivationKey(), userId);
 
         // Поиск лицензии по коду
@@ -245,7 +242,7 @@ public class LicenseService {
         licenseHistoryRepository.save(history);
 
         log.info("License renewed successfully: {} for user: {}", license.getCode(), user.getUsername());
-        return LicenseTicket.fromLicense(savedLicense);
+        return ticketService.generate(license, null);
     }
 
     private boolean checkRenewability(License license) {
@@ -266,7 +263,7 @@ public class LicenseService {
     }
 
     @Transactional(readOnly = true)
-    public LicenseTicket checkLicense(LicenseCheckRequest request, Long userId) {
+    public TicketResponse checkLicense(LicenseCheckRequest request, Long userId) {
         log.info("Checking license for user: {}, device: {}, product: {}",
                 userId, request.getDeviceMac(), request.getProductId());
 
@@ -295,7 +292,7 @@ public class LicenseService {
                 user.getUsername(), product.getName(),
                 java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), license.getEndingDate()));
 
-        return LicenseTicket.fromLicense(license);
+        return ticketService.generate(license, device);
     }
 
     private String generateUniqueLicenseCode() {
@@ -390,5 +387,11 @@ public class LicenseService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
 
         return licenseRepository.findByUser(user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<License> getAllLicenses() {
+        log.info("Getting all licenses");
+        return licenseRepository.findAll();
     }
 }

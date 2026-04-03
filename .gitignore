@@ -34,6 +34,7 @@ build/
 .vscode/
 
 # Сертификаты и ключи
+*.txt
 *.jks
 *.p12
 *.pfx

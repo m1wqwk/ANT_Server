@@ -227,6 +227,7 @@ public class AuthController {
 
 
     @GetMapping("/api/auth/sessions")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserSession>> getUserSessions() {
 
         List<UserSession> sessions = userSessionRepository.findAll();
