@@ -6,6 +6,7 @@ import com.antivirus.server.model.LicenseHistory;
 import com.antivirus.server.model.User;
 import com.antivirus.server.repository.UserRepository;
 import com.antivirus.server.service.LicenseService;
+import com.antivirus.server.signature.SigningService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class LicenseController {
 
     private final LicenseService licenseService;
     private final UserRepository userRepository;
+    private final SigningService signingService;
 
 
     @PostMapping("/create")
@@ -60,11 +62,8 @@ public class LicenseController {
         try {
             Long userId = getUserIdFromAuthentication(authentication);
             TicketResponse ticket = licenseService.activateLicense(request, userId);
+            return ResponseEntity.ok(ticket);
 
-            return ResponseEntity.ok(Map.of(
-                    "message", "License activated successfully",
-                    "ticket", ticket
-            ));
         } catch (IllegalArgumentException e) {
             log.warn("License activation failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -91,11 +90,8 @@ public class LicenseController {
         try {
             Long userId = getUserIdFromAuthentication(authentication);
             TicketResponse ticket = licenseService.renewLicense(request, userId);
+            return ResponseEntity.ok(ticket);
 
-            return ResponseEntity.ok(Map.of(
-                    "message", "License renewed successfully",
-                    "ticket", ticket
-            ));
         } catch (IllegalArgumentException e) {
             log.warn("License renewal failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -122,11 +118,8 @@ public class LicenseController {
         try {
             Long userId = getUserIdFromAuthentication(authentication);
             TicketResponse ticket = licenseService.checkLicense(request, userId);
+            return ResponseEntity.ok(ticket);
 
-            return ResponseEntity.ok(Map.of(
-                    "message", "License is valid",
-                    "ticket", ticket
-            ));
         } catch (IllegalArgumentException e) {
             log.warn("License check failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

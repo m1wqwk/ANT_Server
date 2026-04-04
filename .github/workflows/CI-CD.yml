@@ -2,7 +2,7 @@ name: Java CI with Maven and HTTPS
 
 on:
   push:
-    branches: [ "main", "Z-2"]
+    branches: [ "main", "Z-2", "Z-3"]
   pull_request:
     branches: [ "main" ]
 
@@ -64,6 +64,10 @@ jobs:
           SPRING_PROFILES_ACTIVE: ""
           SSL_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           SERVER_SSL_KEY_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          SIGNATURE_PUBLIC_KEY: ${{ vars.SIGNATURE_PUBLIC_KEY }}
+          SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

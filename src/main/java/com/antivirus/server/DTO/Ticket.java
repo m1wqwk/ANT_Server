@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Ticket {
-
+    private String ticketId;
     private String licenseCode;
     private Long userId;
     private Long deviceId;
@@ -21,4 +21,5 @@ public class Ticket {
     private LocalDateTime serverTime;
     private Long ttl;
     private Boolean blocked;
+
 }
