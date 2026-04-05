@@ -2,7 +2,7 @@ name: Java CI with Maven and HTTPS
 
 on:
   push:
-    branches: [ "main", "Z-2", "Z-3"]
+    branches: [ "main", "Z-2", "Z-3" ]
   pull_request:
     branches: [ "main" ]
 
@@ -35,10 +35,16 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Restore Keystore
+      - name: Restore SSL Keystore
         run: |
           mkdir -p src/main/resources/keystore
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > src/main/resources/keystore/server.jks
+
+      - name: Restore Signing Keystore
+        run: |
+          echo "${{ secrets.SIGNING_KEYSTORE_BASE64 }}" | base64 -d > src/main/resources/signing.jks
+          mkdir -p src/test/resources
+          cp src/main/resources/signing.jks src/test/resources/signing.jks
 
       - name: Create test configuration
         run: |
@@ -47,10 +53,20 @@ jobs:
           spring.datasource.url=jdbc:postgresql://localhost:5432/${{ secrets.DB_NAME }}
           spring.datasource.username=${{ secrets.DB_USER }}
           spring.datasource.password=${{ secrets.DB_PASSWORD }}
+
           spring.jpa.hibernate.ddl-auto=create-drop
           spring.jpa.show-sql=true
+
           server.ssl.enabled=false
+
           jwt.secret=${{ secrets.JWT_KEY }}
+
+          signature.key-store-path=classpath:signing.jks
+          signature.key-store-type=JKS
+          signature.key-store-password=${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
+          signature.key-alias=${{ secrets.SIGNING_KEY_ALIAS }}
+          signature.key-password=${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
+
           EOF
 
       - name: Run tests
@@ -68,10 +84,9 @@ jobs:
           SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
 
-
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: RBPO-jar
+          name: ZiVPO-jar
           path: target/*.jar
           retention-days: 5
