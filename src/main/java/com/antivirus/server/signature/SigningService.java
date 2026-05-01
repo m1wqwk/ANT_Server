@@ -2,6 +2,9 @@ package com.antivirus.server.signature;
 
 import org.springframework.stereotype.Service;
 
+import java.io.FileInputStream;
+import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.security.Signature;
 import java.util.Base64;
 
@@ -48,6 +51,17 @@ public class SigningService {
             return signature.verify(signatureBytes);
         } catch (Exception e) {
             throw new RuntimeException("Signature verification failed", e);
+        }
+    }
+
+    public byte[] signBytes(byte[] data) {
+        try {
+            Signature signature = Signature.getInstance("SHA256withRSA");
+            signature.initSign(keyProvider.getPrivateKey());
+            signature.update(data);
+            return signature.sign();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }
