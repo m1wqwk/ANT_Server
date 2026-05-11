@@ -24,7 +24,13 @@ public class CanonicalizationService {
     public byte[] canonicalize(Object payload) {
         try {
             String json = mapper.writeValueAsString(payload);
-            return json.getBytes(StandardCharsets.UTF_8);
+
+            String canonicalJson =
+                    new org.erdtman.jcs.JsonCanonicalizer(json)
+                            .getEncodedString();
+
+            return canonicalJson.getBytes(StandardCharsets.UTF_8);
+
         } catch (Exception e) {
             throw new RuntimeException("Canonicalization failed", e);
         }

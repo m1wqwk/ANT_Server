@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: antivirus-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: antivirus_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123!@#
+    ports:
+      - "5432:5432"
+
+  minio:
+    image: minio/minio
+    container_name: antivirus-minio
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: root123!@#
+      MINIO_ROOT_PASSWORD: password123!@#
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  minio_data:
